@@ -4,7 +4,7 @@ from loadMasteries import load_mastery
 from bs4 import BeautifulSoup, ResultSet
 
 
-def get_ranked_data(doc: ResultSet, mode: str) -> str | int:
+def get_ranked_data(doc: ResultSet, mode: str) -> str:
 	# Fetch some repetitive data
 	image = doc.find('div', class_='css-1v663t e1x14w4w1').findChild('img')['src'].split('?')[0]
 	try :
