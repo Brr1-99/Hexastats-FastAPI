@@ -14,9 +14,11 @@ app = FastAPI()
 
 @app.get("/")
 def index():
-    return {'This is the home page of the app'}
+    return {'This is the home page of the app',
+		'try asking for a player data in the follwing route: /{player}/{server}'
+	}
 	
-@app.get("/get_player/{player}/{server}")
+@app.get("/{player}/{server}")
 def get_player(
 	player: str = Header(description="The alias of the player"), 
 	server: str = Header(description="The server in which the player is located")
