@@ -18,4 +18,4 @@ This is a backend made for our [Dawichi/hexastats](https://github.com/Dawichi/he
 
 🎉🎉🎉 Check it on [hexastats.vercel.app](https://hexastats.vercel.app)
 
-![showcase](./showcase.png)
+![showcase](./showcase.PNG)
