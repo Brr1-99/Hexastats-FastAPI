@@ -3,8 +3,8 @@ from interfaces import build_champ,build_player
 from loadMasteries import load_mastery
 from bs4 import BeautifulSoup, ResultSet
 
-# Function to factor the extraction of multiple kills data
-def get_multiple_kills(doc: ResultSet, x: int) -> int:
+# Function to factor the extraction of several data
+def get_cells_text(doc: ResultSet, x: int) -> int:
 	try:
 		result = int(doc[x+5].text)
 	except:
@@ -37,23 +37,14 @@ def load_data(ok_server: str, headers: str, player: str) -> dict:
 	document = BeautifulSoup(result, 'html.parser')
 
 
-	champions = "https://"+ ok_server + ".op.gg/summoner/champions/userName=" + player
+	champions = "https://op.gg/summoners/" + ok_server + '/' + player + "/champions"
 	result2 = requests.get(champions, headers=headers).text
 	document2 = BeautifulSoup(result2, 'html.parser')
 
-	# Fetch profile data
-	# name = realName(player)
 	alias = player
 
 	image = document.find('div', class_='profile-icon').findChild('img')['src']
 	level = int(document.find('div', class_='profile-icon').findChild('span').text)
-
-	# Fetch recent games stats
-	# record = document.find(class_='WinRatioTitle').findChildren('span')
-	# matches = record[0].text
-	# wins = record[1].text
-	# loses = record[2].text
-
 
 	# Fetch solo/duo data 
 	image_s, rank_s, lp_s, win_s, lose_s, winrate_s = get_ranked_data(document, 0)
@@ -69,50 +60,50 @@ def load_data(ok_server: str, headers: str, player: str) -> dict:
 	# Fetch flex data 
 	image_f, rank_f, lp_f, win_f, lose_f, winrate_f = get_ranked_data(document, 1)
 
-	champs_more_data = document2.find_all('tr')[1:]
+	champs_more_data = document2.find('table', class_='css-147gr6a exo2f213').findChildren('td')
 
 	champs = []
 
 	# Fetch champions data
-	champs_data = document.find_all('div', class_='champion-box')
-	for index,champ_data in enumerate(champs_data):
-		name_champ = champ_data.find('div', class_='face').findChild('img')['alt']
-		image_champ = str(champ_data.find('img')['src'])
-		games = int(champ_data.find('div', class_='played').findChildren('div')[-1].text.split(' ')[0])
-		winrate = int(champ_data.find('div', class_='played').findChildren('div')[-2].text.split(' ')[0][:-1])
+	for index,champ in enumerate(champs_more_data):
+
+		main_cells = champ[index].find_all('td', class_='css-1wvfkid exo2f211')
+		name_champ = main_cells[0].find('div', class_='summoner-name').findChild('a').text
+		image_champ = main_cells[0].find('div', class_='summoner-image').findChild('img')['src']
+
+		winrate = int(main_cells[1].find('span', class_='text  red ').text[:-1])
+
+		cells = champ[index].find_all('td', class_='value css-1wvfkid exo2f211')
+
 		try:
-			kda = float(champ_data.find('div', class_='kda').findChildren('div')[0].findChildren('div')[-1].text.split(':')[0])
+			kda = float(cells[0].findChild('strong', class_='css-s6j0s e7m7tjk1').text.split(':')[0])
 		except ValueError:
 			kda = 100
-		kills = float(champ_data.find('div', class_='detail').text.split('/')[0])
-		deaths = float(champ_data.find('div', class_='detail').text.split('/')[1])
-		assists = float(champ_data.find('div', class_='detail').text.split('/')[2])
 
-		cs = float(champ_data.find('div', class_='cs').text.split(' ')[1])
-		csmin = float(champ_data.find('div', class_='cs').text.split('(')[-1].split(')')[0])
-
-		cells = champs_more_data[index].find_all('td', class_='value')
+		kills = float(cells[0].findChild('div', class_='kda').text.split('/')[0])
+		deaths = float(cells[0].findChild('div', class_='kda').text.split('/')[1])
+		assists = float(cells[0].findChild('div', class_='kda').text.split('/')[2])
 		
-		gold = int(cells[1].text.replace(',',''))
-		max_kills = int(cells[3].text)
-		max_deaths = int(cells[4].text)
-		avg_damage_dealt = int(cells[5].text.replace(',',''))
-		avg_damage_taken = int(cells[6].text.replace(',',''))
+		gold = get_cells_text(cells, 1)
+		cs = get_cells_text(cells, 2)
+		max_kills = get_cells_text(cells, 3) 
+		max_deaths = get_cells_text(cells, 4) 
+		avg_damage_dealt = get_cells_text(cells, 5) 
+		avg_damage_taken = get_cells_text(cells, 6) 
 
-		
-		double_kills = get_multiple_kills(cells, 2)
-		triple_kills = get_multiple_kills(cells, 3)
-		quadra_kills = get_multiple_kills(cells, 4)
-		penta_kills = get_multiple_kills(cells, 5)
+		double_kills = get_cells_text(cells, 2)
+		triple_kills = get_cells_text(cells, 3)
+		quadra_kills = get_cells_text(cells, 4)
+		penta_kills = get_cells_text(cells, 5)
 
-		champs.append(build_champ(name=name_champ, image=image_champ, games=games, winrate=winrate,
-		kda=kda, kills=kills, deaths=deaths, assists=assists, cs=cs, csmin=csmin, gold=gold,
+		champs.append(build_champ(name=name_champ, image=image_champ, winrate=winrate,
+		kda=kda, kills=kills, deaths=deaths, assists=assists, cs=cs, gold=gold,
 		max_kills=max_kills, max_deaths=max_deaths, avg_damage_dealt=avg_damage_dealt, avg_damage_taken=avg_damage_taken,
 		double_kills=double_kills, triple_kills=triple_kills, quadra_kills=quadra_kills, penta_kills=penta_kills))
 
 	masteries=load_mastery(ok_server, player, headers) 
 
-	data= build_player(#name=name, 
+	data= build_player(
 	alias=alias, image=image, level=level, rank_n=global_ranking, rank_p=percent_better_players,
 	rank_s=rank_s, image_s=image_s, lp_s=lp_s, win_s=win_s, lose_s=lose_s, winrate_s=winrate_s,
 	rank_f=rank_f, image_f=image_f, lp_f=lp_f, win_f=win_f, lose_f=lose_f, winrate_f=winrate_f, champs=champs, masteries=masteries)

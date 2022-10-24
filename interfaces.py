@@ -7,14 +7,12 @@
 def build_champ(
 	name: str, 
 	image: str,
-	games: int,
 	winrate: int,
 	kda: int,
 	kills: int,
 	deaths: int,
 	assists: int,
 	cs: int,
-	csmin: int,
 	gold: int,
 	max_kills: int, 
 	max_deaths: int,
@@ -28,14 +26,12 @@ def build_champ(
 	return {
 		'name': name,
 		'image': image,
-		'games': games,
 		'winrate': winrate,
 		'kda': kda,
 		'kills': kills,
 		'deaths': deaths,
 		'assists': assists,
 		'cs': cs,
-		'csmin': csmin,
 		'gold': gold,
 		'max_kills': max_kills,
 		'max_deaths': max_deaths,
@@ -64,7 +60,6 @@ def build_mastery(
 
 # Function to create the player data
 def build_player(
-	# name: str,
 	alias: str,
 	image: str,
 	level: int,
@@ -86,7 +81,6 @@ def build_player(
 	masteries: dict
 	) -> dict:
 	return {
-		# 'name': name,
 		'alias': alias,
 		'image': image,
 		'level': level,
