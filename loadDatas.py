@@ -3,15 +3,9 @@ from interfaces import build_champ,build_player
 from loadMasteries import load_mastery
 from bs4 import BeautifulSoup, ResultSet
 
-# Function to factor the extraction of several data
-def get_cells_text(doc: ResultSet, x: int) -> int:
-	try:
-		result = int(doc[x+5].text)
-	except:
-		result = 0
-	return result
 
 def get_ranked_data(doc: ResultSet, mode: str) -> str | int:
+	# Fetch some repetitive data
 	image = doc.find('div', class_='css-1v663t e1x14w4w1').findChild('img')['src'].split('?')[0]
 	try :
 		rank = doc.find_all('div', class_='tier')[mode].text
@@ -30,16 +24,11 @@ def get_ranked_data(doc: ResultSet, mode: str) -> str | int:
 	return image, rank, lp, win, lose, winrate
 
 def load_data(ok_server: str, headers: str, player: str) -> dict:
-	data = []
 	# Fetch OPGG data for a player
-	opgg = "https://"+ ok_server + '.op.gg/summoner/userName=' + player
+	data = []
+	opgg = f"https://{ok_server}.op.gg/summoner/userName={player}"
 	result = requests.get(opgg, headers=headers).text
 	document = BeautifulSoup(result, 'html.parser')
-
-
-	champions = "https://op.gg/summoners/" + ok_server + '/' + player + "/champions"
-	result2 = requests.get(champions, headers=headers).text
-	document2 = BeautifulSoup(result2, 'html.parser')
 
 	alias = player
 
@@ -60,43 +49,40 @@ def load_data(ok_server: str, headers: str, player: str) -> dict:
 	# Fetch flex data 
 	image_f, rank_f, lp_f, win_f, lose_f, winrate_f = get_ranked_data(document, 1)
 
-	champs_more_data = document2.find('table', class_='css-147gr6a exo2f213').findChildren('td')
+	# Fetch 10 most played champions data
+
+	champions = f"https://www.op.gg/_next/data/w5wAhn-XD9o_8LpBUs6vL/summoners/{ok_server}/{player}/champions.json"
+	result2 = requests.get(champions, headers=headers).json()
+	champs_data = result2['pageProps']['data']['most_champions']['champion_stats']
 
 	champs = []
 
-	# Fetch champions data
-	for index,champ in enumerate(champs_more_data):
+	for champ in champs_data[:10]:
+		id = champ['id']
+		games = champ['play']
 
-		main_cells = champ[index].find_all('td', class_='css-1wvfkid exo2f211')
-		name_champ = main_cells[0].find('div', class_='summoner-name').findChild('a').text
-		image_champ = main_cells[0].find('div', class_='summoner-image').findChild('img')['src']
+		winrate = round(100*champ['win']/games)
 
-		winrate = int(main_cells[1].find('span', class_='text  red ').text[:-1])
+		kills = round(champ['kill']/games, 1)
+		deaths = round(champ['death']/games, 1)
+		assists = round(champ['assist']/games, 1)
+		kda = round((kills+assists)/deaths, 1)
 
-		cells = champ[index].find_all('td', class_='value css-1wvfkid exo2f211')
+		cs = round((champ['minion_kill']+champ['neutral_minion_kill'])/games, 1)
+		gold = round(champ['gold_earned']/games)
 
-		try:
-			kda = float(cells[0].findChild('strong', class_='css-s6j0s e7m7tjk1').text.split(':')[0])
-		except ValueError:
-			kda = 100
-
-		kills = float(cells[0].findChild('div', class_='kda').text.split('/')[0])
-		deaths = float(cells[0].findChild('div', class_='kda').text.split('/')[1])
-		assists = float(cells[0].findChild('div', class_='kda').text.split('/')[2])
+		max_kills = champ['most_kill']
+		max_deaths = champ['max_death']
 		
-		gold = get_cells_text(cells, 1)
-		cs = get_cells_text(cells, 2)
-		max_kills = get_cells_text(cells, 3) 
-		max_deaths = get_cells_text(cells, 4) 
-		avg_damage_dealt = get_cells_text(cells, 5) 
-		avg_damage_taken = get_cells_text(cells, 6) 
+		avg_damage_dealt = round(champ['damage_dealt']/games)
+		avg_damage_taken = round(champ['damage_taken']/games)
 
-		double_kills = get_cells_text(cells, 2)
-		triple_kills = get_cells_text(cells, 3)
-		quadra_kills = get_cells_text(cells, 4)
-		penta_kills = get_cells_text(cells, 5)
+		double_kills = champ['double_kill']
+		triple_kills = champ['triple_kill']
+		quadra_kills = champ['quadra_kill']
+		penta_kills = champ['penta_kill']
 
-		champs.append(build_champ(name=name_champ, image=image_champ, winrate=winrate,
+		champs.append(build_champ(id=id, winrate=winrate,
 		kda=kda, kills=kills, deaths=deaths, assists=assists, cs=cs, gold=gold,
 		max_kills=max_kills, max_deaths=max_deaths, avg_damage_dealt=avg_damage_dealt, avg_damage_taken=avg_damage_taken,
 		double_kills=double_kills, triple_kills=triple_kills, quadra_kills=quadra_kills, penta_kills=penta_kills))

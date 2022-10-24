@@ -5,8 +5,7 @@
 
 # Function to create the champ data
 def build_champ(
-	name: str, 
-	image: str,
+	id: int, 
 	winrate: int,
 	kda: int,
 	kills: int,
@@ -24,8 +23,7 @@ def build_champ(
 	penta_kills: int
 	) -> dict:
 	return {
-		'name': name,
-		'image': image,
+		'id': id,
 		'winrate': winrate,
 		'kda': kda,
 		'kills': kills,

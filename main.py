@@ -1,5 +1,5 @@
 import requests
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Header
 from whitelist import validate_server
 from loadDatas import load_data
 
@@ -12,11 +12,13 @@ headers.update({
 
 app = FastAPI()
 
-@app.get("/get_player/")
-async def home(player: str = Query(description="The alias of the player"), server: str = Query(description="The key of the server in which the player is located")):
+@app.get("/get_player/{player}/{server}")
+async def home(
+	player: str = Header(description="The alias of the player"), 
+	server: str = Header(description="The server in which the player is located")
+	)-> dict:
 
 	ok_server = validate_server(server)
 
-	data = load_data(ok_server, headers, player)
-
-	return data
+	return load_data(ok_server, headers, player)
+	
