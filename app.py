@@ -13,13 +13,13 @@ headers.update({
 app = FastAPI()
 
 @app.get("/")
-def index():
+async def index() -> dict:
     return {'This is the home page of the app',
 		'Try asking for a player data in the follwing route: /{player}/{server}'
 	}
 	
 @app.get("/{player}/{server}")
-def get_player(
+async def get_player(
 	player: str = Header(description="The alias of the player"), 
 	server: str = Header(description="The server in which the player is located")
 	)-> dict:
