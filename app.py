@@ -15,7 +15,7 @@ app = FastAPI()
 @app.get("/")
 def index():
     return {'This is the home page of the app',
-		'try asking for a player data in the follwing route: /{player}/{server}'
+		'Try asking for a player data in the follwing route: /{player}/{server}'
 	}
 	
 @app.get("/{player}/{server}")
